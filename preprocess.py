@@ -312,7 +312,7 @@ def dataset_dest_prefix(args, output_prefix, lang):
 
 def dataset_dest_file(args, output_prefix, lang, extension):
     base = dataset_dest_prefix(args, output_prefix, lang)
-    return "{base}.{extension}"
+    return f"{base}.{extension}"
 
 
 def get_offsets(input_file, num_workers):
