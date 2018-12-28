@@ -303,11 +303,11 @@ def binarize_with_load(args, filename, dict_path, output_prefix, lang, offset, e
 
 
 def dataset_dest_prefix(args, output_prefix, lang):
-    base = "{args.destdir}/{output_prefix}"
+    base = f"{args.destdir}/{output_prefix}"
     lang_part = (
-        ".{args.source_lang}-{args.target_lang}.{lang}" if lang is not None else ""
+        f".{args.source_lang}-{args.target_lang}.{lang}" if lang is not None else ""
     )
-    return "{base}{lang_part}"
+    return f"{base}{lang_part}"
 
 
 def dataset_dest_file(args, output_prefix, lang, extension):
