@@ -283,7 +283,7 @@ def save_checkpoint(args, trainer, epoch_itr, val_loss):
             val_loss is not None and
             (not hasattr(save_checkpoint, 'best') or val_loss < save_checkpoint.best)
     )
-    checkpoint_conds['checkpoint_last.pt'] = True  # keep this last so that it's a symlink
+    checkpoint_conds[args.filename] = True  # keep this last so that it's a symlink
 
     prev_best = getattr(save_checkpoint, 'best', val_loss)
     if val_loss is not None:
