@@ -75,6 +75,7 @@ def main(args):
     )
 
     # Load the latest checkpoint if one is available
+
     if not load_checkpoint(args, trainer, epoch_itr):
         trainer.dummy_train_step([dummy_batch])
 
@@ -279,7 +280,7 @@ def save_checkpoint(args, trainer, epoch_itr, val_loss):
             not end_of_epoch and args.save_interval_updates > 0 and
             updates % args.save_interval_updates == 0
     )
-    checkpoint_conds['checkpoint_best.pt'] = (
+    checkpoint_conds[args.filename_best] = (
             val_loss is not None and
             (not hasattr(save_checkpoint, 'best') or val_loss < save_checkpoint.best)
     )
