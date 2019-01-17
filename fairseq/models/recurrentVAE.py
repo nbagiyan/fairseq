@@ -23,6 +23,8 @@ class VAELSTMEncoder(FairseqEncoder):
         )
         self.dropout = nn.Dropout(p=dropout)
 
+        self.hidden_dim = hidden_dim
+
         # We'll use a single-layer, unidirectional LSTM for simplicity.
         self.lstm = nn.LSTM(
             input_size=embed_dim,
@@ -53,6 +55,8 @@ class VAELSTMEncoder(FairseqEncoder):
                 left_to_right=True
             )
 
+        bsz, seqlen = src_tokens.size()
+
         # Embed the source.
         x = self.embed_tokens(src_tokens)
 
@@ -63,9 +67,15 @@ class VAELSTMEncoder(FairseqEncoder):
         x = nn.utils.rnn.pack_padded_sequence(x, src_lengths, batch_first=True)
 
         # Get the output from the LSTM.
-        _outputs, (final_hidden, _final_cell) = self.lstm(x)
+        _outputs, (_final_hidden, _final_cell) = self.lstm(x)
 
-        final_hidden = torch.mean(_outputs, dim=0)
+        x, _ = nn.utils.rnn.pad_packed_sequence(_outputs, padding_value=0)
+
+        assert list(x.size()) == [seqlen, bsz, 2*self.hidden_dim]
+
+        final_hidden = torch.mean(x, dim=0)
+
+        assert list(final_hidden.size()) == [bsz, 2*self.hidden_dim]
 
         mu = self.context_to_mu(final_hidden)
         logvar = self.context_to_logvar(final_hidden)
