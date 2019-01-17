@@ -22,7 +22,7 @@ class ELBO(FairseqCriterion):
         3) logging outputs to display while training
         """
         net_output = model(**sample['net_input'])
-        cross_entropy = self.compute_loss(model, net_output, sample, reduce=reduce)
+        cross_entropy = self.compute_cross_entropy(model, net_output, sample, reduce=reduce)
         kld = self.compute_kld(net_output)
         loss = 79 * cross_entropy + kld
         sample_size = sample['target'].size(0) if self.args.sentence_avg else sample['ntokens']
@@ -39,7 +39,6 @@ class ELBO(FairseqCriterion):
         logvar, mu = net_output['logvar'], net_output['mu']
         kld = (-0.5 * torch.sum(logvar - torch.pow(mu, 2) - torch.exp(logvar) + 1, 1)).mean().squeeze()
         return kld
-
 
     def compute_cross_entropy(self, model, net_output, sample, reduce=True):
         """Compute the cross-entropy loss for the given sample."""
