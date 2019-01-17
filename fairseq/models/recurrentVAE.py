@@ -196,7 +196,7 @@ class VAELSTMDecoder(FairseqDecoder):
         x = self.output_projection(x)
 
         # Return the logits and ``None`` for the attention weights
-        return x, None, (encoder_out['logvar'], encoder_out['mu'])
+        return x, None, encoder_out['logvar'], encoder_out['mu']
 
 
 @register_model('vae_lstm')

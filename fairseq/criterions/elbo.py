@@ -36,7 +36,7 @@ class ELBO(FairseqCriterion):
 
     def compute_kld(self, net_output):
         """Compute the kullback leibler divergence for the given sample."""
-        logvar, mu = net_output['logvar'], net_output['mu']
+        logvar, mu = net_output[2], net_output[3]
         kld = (-0.5 * torch.sum(logvar - torch.pow(mu, 2) - torch.exp(logvar) + 1, 1)).mean().squeeze()
         return kld
 
