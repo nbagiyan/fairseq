@@ -16,8 +16,7 @@ class SimpleLSTMEncoder(FairseqEncoder):
         super().__init__(dictionary)
         self.args = args
 
-        self.bidirectional=bidirectional
-
+        self.bidirectional = bidirectional
 
         # Our encoder will embed the inputs before feeding them to the LSTM.
         self.embed_tokens = nn.Embedding(
@@ -26,10 +25,6 @@ class SimpleLSTMEncoder(FairseqEncoder):
             padding_idx=dictionary.pad(),
         )
         self.dropout = nn.Dropout(p=dropout)
-
-        if self.bidirectional:
-
-            self.hidden_dim = hidden_dim / 2
 
         # We'll use a single-layer, unidirectional LSTM for simplicity.
         self.lstm = nn.LSTM(
@@ -79,6 +74,12 @@ class SimpleLSTMEncoder(FairseqEncoder):
         x, _ = nn.utils.rnn.pad_packed_sequence(_outputs, padding_value=0)
         print(x.size())
         assert list(x.size()) == [seqlen, bsz, 2*self.hidden_dim]
+
+        if self.bidirectional:
+
+            final_hidden = (self.hidden_dim[:, :, :self.hidden_dim] +  x[:, :, self.hidden_dim:]) / 2
+
+            assert list(x.size()) == [seqlen, bsz, self.hidden_dim]
 
         final_hidden = torch.mean(final_hidden, dim=0)
 
