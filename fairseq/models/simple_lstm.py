@@ -76,7 +76,9 @@ class SimpleLSTMEncoder(FairseqEncoder):
 
         final_hidden = torch.mean(x, dim=0)
 
-        assert list(final_hidden.size()) == [bsz, 2*self.hidden_dim]
+        final_hidden = (final_hidden[:, :, :self.hidden_dim] + final_hidden[:, :, self.hidden_dim:]) / 2
+
+        assert list(final_hidden.size()) == [bsz, self.hidden_dim]
 
         # Return the Encoder's output. This can be any object and will be
         # passed directly to the Decoder.
