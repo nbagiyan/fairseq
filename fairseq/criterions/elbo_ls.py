@@ -7,12 +7,13 @@ from fairseq import utils
 from . import FairseqCriterion, register_criterion
 
 
-@register_criterion('elbols')
-class ElboLs(FairseqCriterion):
+@register_criterion('label_smoothed_elbo')
+class LabelSmoothedElbo(FairseqCriterion):
 
     def __init__(self, args, task):
         super().__init__(args, task)
         self.alpha = args.alpha
+        self.eps = args.label_smoothing
 
     @staticmethod
     def add_args(parser):
