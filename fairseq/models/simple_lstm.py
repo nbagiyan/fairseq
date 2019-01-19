@@ -80,6 +80,7 @@ class SimpleLSTMEncoder(FairseqEncoder):
                 return outs.view(self.num_layers, 2, bsz, -1).transpose(1, 2).contiguous().view(self.num_layers, bsz, -1)
 
             final_hidden = combine_bidir(final_hidden)
+            print(final_hidden.size())
 
         final_hidden = torch.mean(final_hidden, dim=0)
 
