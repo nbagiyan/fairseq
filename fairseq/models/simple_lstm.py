@@ -74,16 +74,16 @@ class SimpleLSTMEncoder(FairseqEncoder):
 
         assert list(x.size()) == [seqlen, bsz, 2*self.hidden_dim]
 
-        final_hidden = torch.mean(x, dim=0)
-
-        assert list(final_hidden.size()) == [bsz, 2*self.hidden_dim]
-
         if self.bidirectional:
 
             def combine_bidir(outs):
                 return outs.view(self.num_layers, 2, bsz, -1).transpose(1, 2).contiguous().view(self.num_layers, bsz, -1)
 
             final_hidden = combine_bidir(final_hidden)
+
+        final_hidden = torch.mean(final_hidden, dim=0)
+
+        assert list(final_hidden.size()) == [bsz, self.hidden_dim]
 
         # Return the Encoder's output. This can be any object and will be
         # passed directly to the Decoder.
