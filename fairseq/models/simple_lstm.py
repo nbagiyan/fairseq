@@ -33,6 +33,8 @@ class SimpleLSTMEncoder(FairseqEncoder):
             bidirectional=True,
         )
 
+        self.bidirectional = True
+
     def forward(self, src_tokens, src_lengths):
         # The inputs to the ``forward()`` function are determined by the
         # Task, and in particular the ``'net_input'`` key in each
@@ -73,6 +75,13 @@ class SimpleLSTMEncoder(FairseqEncoder):
         final_hidden = torch.mean(x, dim=0)
 
         assert list(final_hidden.size()) == [bsz, 2*self.hidden_dim]
+
+        if self.bidirectional:
+
+            def combine_bidir(outs):
+                return outs.view(self.num_layers, 2, bsz, -1).transpose(1, 2).contiguous().view(self.num_layers, bsz, -1)
+
+            final_hidden = combine_bidir(final_hidden)
 
         # Return the Encoder's output. This can be any object and will be
         # passed directly to the Decoder.
