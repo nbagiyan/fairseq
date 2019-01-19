@@ -23,12 +23,14 @@ class SimpleLSTMEncoder(FairseqEncoder):
         )
         self.dropout = nn.Dropout(p=dropout)
 
+        self.hidden_dim = hidden_dim
+
         # We'll use a single-layer, unidirectional LSTM for simplicity.
         self.lstm = nn.LSTM(
             input_size=embed_dim,
             hidden_size=hidden_dim,
             num_layers=1,
-            bidirectional=False,
+            bidirectional=True,
         )
 
     def forward(self, src_tokens, src_lengths):
@@ -50,6 +52,8 @@ class SimpleLSTMEncoder(FairseqEncoder):
                 left_to_right=True
             )
 
+        bsz, seqlen = src_tokens.size()
+
         # Embed the source.
         x = self.embed_tokens(src_tokens)
 
@@ -62,11 +66,19 @@ class SimpleLSTMEncoder(FairseqEncoder):
         # Get the output from the LSTM.
         _outputs, (final_hidden, _final_cell) = self.lstm(x)
 
+        x, _ = nn.utils.rnn.pad_packed_sequence(_outputs, padding_value=0)
+
+        assert list(x.size()) == [seqlen, bsz, 2*self.hidden_dim]
+
+        final_hidden = torch.mean(x, dim=0)
+
+        assert list(final_hidden.size()) == [bsz, 2*self.hidden_dim]
+
         # Return the Encoder's output. This can be any object and will be
         # passed directly to the Decoder.
         return {
             # this will have shape `(bsz, hidden_dim)`
-            'final_hidden': final_hidden.squeeze(0),
+            'final_hidden': final_hidden,
         }
 
     # Encoders are required to implement this method so that we can rearrange
