@@ -33,6 +33,8 @@ class SimpleLSTMEncoder(FairseqEncoder):
             bidirectional=True,
         )
 
+        self.num_layers = 1
+
         self.bidirectional = True
 
     def forward(self, src_tokens, src_lengths):
