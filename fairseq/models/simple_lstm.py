@@ -78,7 +78,7 @@ class SimpleLSTMEncoder(FairseqEncoder):
 
         x, _ = nn.utils.rnn.pad_packed_sequence(_outputs, padding_value=0)
         print(x.size())
-        assert list(x.size()) == [seqlen, bsz, 2*self.hidden_dim]
+        assert list(x.size()) == [seqlen, bsz, self.hidden_dim]
 
         final_hidden = torch.mean(final_hidden, dim=0)
 
