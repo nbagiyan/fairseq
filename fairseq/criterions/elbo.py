@@ -12,6 +12,15 @@ class ELBO(FairseqCriterion):
 
     def __init__(self, args, task):
         super().__init__(args, task)
+        self.alpha = args.alpha
+
+    @staticmethod
+    def add_args(parser):
+        """Add criterion-specific arguments to the parser."""
+        # fmt: off
+        parser.add_argument('--alpha', default=79, type=float, metavar='D',
+                            help='alpha for cross-entropy coefficient')
+        # fmt: on
 
     def forward(self, model, sample, reduce=True):
         """Compute the loss for the given sample.
@@ -24,7 +33,7 @@ class ELBO(FairseqCriterion):
         net_output = model(**sample['net_input'])
         cross_entropy = self.compute_cross_entropy(model, net_output, sample, reduce=reduce)
         kld = self.compute_kld(net_output)
-        loss = 79 * cross_entropy + kld
+        loss = self.alpha * cross_entropy + kld
         sample_size = sample['target'].size(0) if self.args.sentence_avg else sample['ntokens']
         logging_output = {
             'loss': utils.item(loss.data) if reduce else loss.data,
