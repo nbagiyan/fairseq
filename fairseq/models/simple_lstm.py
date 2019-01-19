@@ -71,7 +71,7 @@ class SimpleLSTMEncoder(FairseqEncoder):
         _outputs, (final_hidden, _final_cell) = self.lstm(x)
 
         x, _ = nn.utils.rnn.pad_packed_sequence(_outputs, padding_value=0)
-
+        print(x.size())
         assert list(x.size()) == [seqlen, bsz, 2*self.hidden_dim]
 
         if self.bidirectional:
