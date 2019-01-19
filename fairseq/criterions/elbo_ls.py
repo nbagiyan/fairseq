@@ -7,8 +7,8 @@ from fairseq import utils
 from . import FairseqCriterion, register_criterion
 
 
-@register_criterion('elbo_ls')
-class ELBO_LS(FairseqCriterion):
+@register_criterion('elbols')
+class ElboLs(FairseqCriterion):
 
     def __init__(self, args, task):
         super().__init__(args, task)
@@ -67,17 +67,17 @@ class ELBO_LS(FairseqCriterion):
         loss = (1. - self.eps) * nll_loss + eps_i * smooth_loss
         return loss, nll_loss
 
-
-def aggregate_logging_outputs(logging_outputs):
-    """Aggregate logging outputs from data parallel training."""
-    ntokens = sum(log.get('ntokens', 0) for log in logging_outputs)
-    nsentences = sum(log.get('nsentences', 0) for log in logging_outputs)
-    sample_size = sum(log.get('sample_size', 0) for log in logging_outputs)
-    return {
-        'loss': sum(log.get('loss', 0) for log in logging_outputs) / sample_size / math.log(2),
-        'nll_loss': sum(log.get('nll_loss', 0) for log in logging_outputs) / ntokens / math.log(2),
-        'kld': sum(log.get('kld', 0) for log in logging_outputs) / sample_size / math.log(2),
-        'ntokens': ntokens,
-        'nsentences': nsentences,
-        'sample_size': sample_size,
-    }
+    @staticmethod
+    def aggregate_logging_outputs(logging_outputs):
+        """Aggregate logging outputs from data parallel training."""
+        ntokens = sum(log.get('ntokens', 0) for log in logging_outputs)
+        nsentences = sum(log.get('nsentences', 0) for log in logging_outputs)
+        sample_size = sum(log.get('sample_size', 0) for log in logging_outputs)
+        return {
+            'loss': sum(log.get('loss', 0) for log in logging_outputs) / sample_size / math.log(2),
+            'nll_loss': sum(log.get('nll_loss', 0) for log in logging_outputs) / ntokens / math.log(2),
+            'kld': sum(log.get('kld', 0) for log in logging_outputs) / sample_size / math.log(2),
+            'ntokens': ntokens,
+            'nsentences': nsentences,
+            'sample_size': sample_size,
+        }
