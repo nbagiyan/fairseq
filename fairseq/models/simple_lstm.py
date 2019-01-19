@@ -18,6 +18,8 @@ class SimpleLSTMEncoder(FairseqEncoder):
 
         self.bidirectional = bidirectional
 
+        self.hidden_dim = hidden_dim
+
         # Our encoder will embed the inputs before feeding them to the LSTM.
         self.embed_tokens = nn.Embedding(
             num_embeddings=len(dictionary),
@@ -77,7 +79,7 @@ class SimpleLSTMEncoder(FairseqEncoder):
 
         if self.bidirectional:
 
-            final_hidden = (self.hidden_dim[:, :, :self.hidden_dim] +  x[:, :, self.hidden_dim:]) / 2
+            final_hidden = (self.hidden_dim[:, :, :self.hidden_dim] + x[:, :, self.hidden_dim:]) / 2
 
             assert list(x.size()) == [seqlen, bsz, self.hidden_dim]
 
