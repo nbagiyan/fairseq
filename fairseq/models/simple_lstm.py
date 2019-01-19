@@ -79,7 +79,7 @@ class SimpleLSTMEncoder(FairseqEncoder):
 
         if self.bidirectional:
 
-            final_hidden = (self.hidden_dim[:, :, :self.hidden_dim] + x[:, :, self.hidden_dim:]) / 2
+            final_hidden = (x[:, :, :self.hidden_dim] + x[:, :, self.hidden_dim:]) / 2
 
             assert list(x.size()) == [seqlen, bsz, self.hidden_dim]
 
@@ -133,7 +133,7 @@ class SimpleLSTMDecoder(FairseqDecoder):
         self.lstm = nn.LSTM(
             # For the first layer we'll concatenate the Encoder's final hidden
             # state with the embedded target tokens.
-            input_size=2*encoder_hidden_dim + embed_dim,
+            input_size=encoder_hidden_dim + embed_dim,
             hidden_size=hidden_dim,
             num_layers=1,
             bidirectional=False,
