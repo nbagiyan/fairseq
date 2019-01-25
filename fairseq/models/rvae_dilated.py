@@ -191,7 +191,7 @@ class DilatedConvolutionsDecoder(FairseqDecoder):
 
         x = x.view(-1, self.out_size)
 
-        x = self.fc(x)
+        x = self.output_projection(x)
 
         return x, None
 
