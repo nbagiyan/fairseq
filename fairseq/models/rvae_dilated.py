@@ -193,7 +193,7 @@ class DilatedConvolutionsDecoder(FairseqDecoder):
 
         x = self.output_projection(x)
 
-        return x, None
+        return x, None, encoder_out['logvar'], encoder_out['mu']
 
 
     @staticmethod
