@@ -1,5 +1,5 @@
 import torch.nn as nn
-import torch.functional as F
+import torch.nn.functional as F
 import torch
 from fairseq import utils
 from fairseq.models import FairseqEncoder
