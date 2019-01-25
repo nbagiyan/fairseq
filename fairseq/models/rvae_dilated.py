@@ -115,8 +115,10 @@ class VAELSTMEncoder(FairseqEncoder):
 class DilatedConvolutionsDecoder(FairseqDecoder):
 
     def __init__(
-        self, args, dictionary, embed_dim=128, hidden_dim=128, dropout=0.1,
+            self, dictionary, encoder_hidden_dim=128, embed_dim=128,
+            dropout=0.1,
     ):
+
         super().__init__(dictionary)
         self.args = args
 
@@ -124,7 +126,7 @@ class DilatedConvolutionsDecoder(FairseqDecoder):
 
         self.decoder_dilations = [1, 2, 4]
 
-        self.decoder_kernels = [(400, hidden_dim + embed_dim, 3),
+        self.decoder_kernels = [(400, encoder_hidden_dim + embed_dim, 3),
                                 (450, 400, 3),
                                 (500, 450, 3)]
 
@@ -207,3 +209,81 @@ class DilatedConvolutionsDecoder(FairseqDecoder):
     def _add_to_parameters(self, parameters, name):
         for i, parameter in enumerate(parameters):
             self.register_parameter(name='{}-{}'.format(name, i), param=parameter)
+
+
+@register_model('dilated_rvae')
+class DilatedRVAE(FairseqModel):
+
+    @staticmethod
+    def add_args(parser):
+        # Models can override this method to add new command-line arguments.
+        # Here we'll add some new command-line arguments to configure dropout
+        # and the dimensionality of the embeddings and hidden states.
+        parser.add_argument(
+            '--encoder-embed-dim', type=int, metavar='N',
+            help='dimensionality of the encoder embeddings',
+        )
+        parser.add_argument(
+            '--encoder-hidden-dim', type=int, metavar='N',
+            help='dimensionality of the encoder hidden state',
+        )
+        parser.add_argument(
+            '--encoder-dropout', type=float, default=0.1,
+            help='encoder dropout probability',
+        )
+        parser.add_argument(
+            '--decoder-embed-dim', type=int, metavar='N',
+            help='dimensionality of the decoder embeddings',
+        )
+        parser.add_argument(
+            '--decoder-hidden-dim', type=int, metavar='N',
+            help='dimensionality of the decoder hidden state',
+        )
+        parser.add_argument(
+            '--decoder-dropout', type=float, default=0.1,
+            help='decoder dropout probability',
+        )
+
+    @classmethod
+    def build_model(cls, args, task):
+        # Fairseq initializes models by calling the ``build_model()``
+        # function. This provides more flexibility, since the returned model
+        # instance can be of a different type than the one that was called.
+        # In this case we'll just return a SimpleLSTMModel instance.
+
+        # Initialize our Encoder and Decoder.
+        encoder = VAELSTMEncoder(
+            args=args,
+            dictionary=task.source_dictionary,
+            embed_dim=args.encoder_embed_dim,
+            hidden_dim=args.encoder_hidden_dim,
+            dropout=args.encoder_dropout,
+        )
+        decoder = DilatedConvolutionsDecoder(
+            dictionary=task.target_dictionary,
+            encoder_hidden_dim=args.encoder_hidden_dim,
+            embed_dim=args.decoder_embed_dim,
+            dropout=args.decoder_dropout,
+        )
+        model = DilatedRVAE(encoder, decoder)
+
+        # Print the model architecture.
+        print(model)
+
+        return model
+
+    def forward(self, src_tokens, src_lengths, prev_output_tokens):
+        encoder_out = self.encoder(src_tokens, src_lengths)
+        decoder_out = self.decoder(prev_output_tokens, encoder_out)
+        return decoder_out
+
+
+@register_model_architecture('dilated_rvae', 'dilated_rvae')
+def tutorial_simple_lstm(args):
+    # We use ``getattr()`` to prioritize arguments that are explicitly given
+    # on the command-line, so that the defaults defined below are only used
+    # when no other value has been specified.
+    args.encoder_embed_dim = getattr(args, 'encoder_embed_dim', 256)
+    args.encoder_hidden_dim = getattr(args, 'encoder_hidden_dim', 256)
+    args.decoder_embed_dim = getattr(args, 'decoder_embed_dim', 256)
+    args.decoder_hidden_dim = getattr(args, 'decoder_hidden_dim', 256)
