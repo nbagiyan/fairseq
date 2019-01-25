@@ -120,7 +120,6 @@ class DilatedConvolutionsDecoder(FairseqDecoder):
     ):
 
         super().__init__(dictionary)
-        self.args = args
 
         self.kernels = [(1, 25), (2, 50), (3, 75), (4, 100), (5, 125), (6, 150)]
 
