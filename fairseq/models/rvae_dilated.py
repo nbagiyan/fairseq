@@ -194,10 +194,10 @@ class DilatedConvolutionsDecoder(FairseqDecoder):
 
         x = x.view(-1, self.out_size)
 
+        print(x.size())
         x = self.output_projection(x)
 
         return x, None, encoder_out['logvar'], encoder_out['mu']
-
 
     @staticmethod
     def effective_k(k, d):

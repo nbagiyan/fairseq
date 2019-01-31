@@ -194,6 +194,8 @@ class SimpleLSTMDecoder(FairseqDecoder):
         )
         x = output.transpose(0, 1)  # convert to shape `(bsz, tgt_len, hidden)`
 
+        print(x.size())
+
         # Project the outputs to the size of the vocabulary.
         x = self.output_projection(x)
 
