@@ -559,6 +559,8 @@ class SequenceGenerator(object):
                 decoder_out = list(model.decoder(tokens, encoder_out, incremental_state=incremental_states[model]))
             else:
                 decoder_out = list(model.decoder(tokens, encoder_out))
+            print(decoder_out[0].size())
+            print(decoder_out)
             decoder_out[0] = decoder_out[0][:, -1, :]
             attn = decoder_out[1]
             if type(attn) is dict:
