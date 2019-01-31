@@ -107,8 +107,11 @@ class VAELSTMEncoder(FairseqEncoder):
             `encoder_out` rearranged according to `new_order`
         """
         final_hidden = encoder_out['final_hidden']
+
         return {
             'final_hidden': final_hidden.index_select(0, new_order),
+            'logvar': encoder_out['logvar'],
+            'mu': encoder_out['mu'],
         }
 
 
@@ -192,8 +195,6 @@ class DilatedConvolutionsDecoder(FairseqDecoder):
         x = x.view(-1, self.out_size)
 
         x = self.output_projection(x)
-
-        print(encoder_out)
 
         return x, None, encoder_out['logvar'], encoder_out['mu']
 
