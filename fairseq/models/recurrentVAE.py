@@ -81,7 +81,9 @@ class VAELSTMEncoder(FairseqEncoder):
         logvar = self.context_to_logvar(final_hidden)
 
         std = torch.exp(0.5 * logvar)
-        z = torch.randn(mu.size()).cuda()
+        if torch.cuda.is_available():
+            z = torch.randn(mu.size()).cuda()
+        z = torch.randn(mu.size())
         z = z * std + mu
         # Return the Encoder's output. This can be any object and will be
         # passed directly to the Decoder.
@@ -108,6 +110,8 @@ class VAELSTMEncoder(FairseqEncoder):
         final_hidden = encoder_out['final_hidden']
         return {
             'final_hidden': final_hidden.index_select(0, new_order),
+            'logvar': encoder_out['logvar'],
+            'mu': encoder_out['mu'],
         }
 
 
