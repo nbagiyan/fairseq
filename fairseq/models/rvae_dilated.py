@@ -194,8 +194,6 @@ class DilatedConvolutionsDecoder(FairseqDecoder):
 
         x = x.transpose(1, 2).contiguous()
 
-        print(x.size())
-
         x = self.output_projection(x)
 
         return x, None, encoder_out['logvar'], encoder_out['mu']
