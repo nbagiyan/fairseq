@@ -83,6 +83,8 @@ class VAELSTMEncoder(FairseqEncoder):
 
         std = torch.exp(0.5 * logvar)
         z = torch.randn(mu.size())
+        if torch.cuda.is_available():
+            z = z.cuda()
         z = z * std + mu
         # Return the Encoder's output. This can be any object and will be
         # passed directly to the Decoder.
