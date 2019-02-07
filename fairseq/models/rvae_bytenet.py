@@ -43,7 +43,7 @@ class ResBlock(nn.Module):
         self.relu = nn.ReLU(True)
         self.pad = nn.ConstantPad1d((ResBlock.same_pad(kernel_size, dilation), 0), 0.)
         self.masked_conv = nn.Conv1d(hidden_dim // 2, hidden_dim // 2, kernel_size=kernel_size, dilation=dilation)
-        self.layer_norm3 = LayerNorm(hidden_dim)
+        self.layer_norm3 = LayerNorm(hidden_dim // 2)
         self.conv2 = nn.Conv1d(hidden_dim // 2, hidden_dim, kernel_size=1)
 
     @staticmethod
@@ -64,7 +64,6 @@ class ResBlock(nn.Module):
         x = self.relu(x)
         x = self.conv2(x)
         x += input
-        x = x.transpose(2, 0).transpose(1, 2)
         return x
 
 
