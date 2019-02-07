@@ -205,7 +205,7 @@ class ByteNetDecoder(FairseqDecoder):
             dim=2,
         )
 
-        x = x.view(bsz, self.hidden_dim, tgt_len)
+        x = x.transpose(1, 2).contiguous()
 
         for layer in self.layers:
             x = layer(x)
