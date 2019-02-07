@@ -42,9 +42,9 @@ class ResBlock(nn.Module):
         self.layer_norm2 = LayerNorm(hidden_dim // 2)
         self.relu = nn.ReLU(True)
         self.pad = nn.ConstantPad1d((ResBlock.same_pad(kernel_size, dilation), 0), 0.)
-        self.masked_conv = nn.Conv1d(hidden_dim, hidden_dim, kernel_size=kernel_size, dilation=dilation)
+        self.masked_conv = nn.Conv1d(hidden_dim // 2, hidden_dim // 2, kernel_size=kernel_size, dilation=dilation)
         self.layer_norm3 = LayerNorm(hidden_dim)
-        self.conv2 = nn.Conv1d(hidden_dim, 2*hidden_dim, kernel_size=1)
+        self.conv2 = nn.Conv1d(hidden_dim // 2, hidden_dim, kernel_size=1)
 
     @staticmethod
     def same_pad(k=1, dil=1):
@@ -223,19 +223,17 @@ class ByteNetDecoder(FairseqDecoder):
             dim=2,
         )
 
-        print(x.size())
-
-        x = x.transpose(1, 2)
-
-        print(x.size())
-
+        x = x.transpose(1, 2).transpose(0, 2)
 
         for layer in self.layers:
             x = layer(x)
 
-        x = x.transpose(1, 2)
+        print(x.size())
+        x = x.transpose(1, 2).transpose(0, 2)
+        print(x.size())
 
         x = x.transpose(0, 1)
+        print(x.size())
 
         x = self.output_projection(x)
 
