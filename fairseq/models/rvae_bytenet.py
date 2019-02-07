@@ -9,26 +9,42 @@ from fairseq.models import FairseqModel, register_model
 from fairseq.models import register_model_architecture
 
 
-def LayerNorm(dim):
-    m = nn.LayerNorm(dim)
-    return m
+class LayerNorm(nn.Module):
+    def __init__(self, size, eps=1e-8):
+        super(LayerNorm, self).__init__()
+
+        self.eps = eps
+
+        self.sigma = nn.Parameter(torch.ones(size))
+        self.mu = nn.Parameter(torch.zeros(size))
+
+    def forward(self, z):
+
+        z = z.transpose(1, 2)
+
+        mu = torch.mean(z, keepdim=True, dim=-1)
+        sigma = torch.std(z, keepdim=True, dim=-1)
+        out = (z - mu) / (sigma + self.eps)
+        out = out * self.sigma.expand_as(out) + self.mu.expand_as(out)
+
+        return out.transpose(1, 2)
 
 
 class ResBlock(nn.Module):
 
     def __init__(self, hidden_dim, dilation=1, kernel_size=3):
         super(ResBlock, self).__init__()
-        self.hidden_dim = hidden_dim # input features
-        self.dilation = dilation # dilation size
-        self.kernel_size = kernel_size # "masked kernel size"
-        self.layer_norm1 = LayerNorm(hidden_dim) # same as LayerNorm
-        self.conv1 = nn.Conv1d(hidden_dim,  hidden_dim // 2, kernel_size=1) # output is "d"
+        self.hidden_dim = hidden_dim
+        self.dilation = dilation
+        self.kernel_size = kernel_size
+        self.layer_norm1 = LayerNorm(hidden_dim)
+        self.conv1 = nn.Conv1d(hidden_dim,  hidden_dim // 2, kernel_size=1)
         self.layer_norm2 = LayerNorm(hidden_dim // 2)
         self.relu = nn.ReLU(True)
         self.pad = nn.ConstantPad1d((ResBlock.same_pad(kernel_size, dilation), 0), 0.)
         self.masked_conv = nn.Conv1d(hidden_dim, hidden_dim, kernel_size=kernel_size, dilation=dilation)
         self.layer_norm3 = LayerNorm(hidden_dim)
-        self.conv2 = nn.Conv1d(hidden_dim, 2*hidden_dim, kernel_size=1) # output is "2*d"
+        self.conv2 = nn.Conv1d(hidden_dim, 2*hidden_dim, kernel_size=1)
 
     @staticmethod
     def same_pad(k=1, dil=1):
@@ -39,7 +55,6 @@ class ResBlock(nn.Module):
         x = input
         x = self.layer_norm1(x)
         x = self.relu(x)
-        x = x.transpose(2, 1).transpose(0, 2)
         x = self.conv1(x)
         x = self.layer_norm2(x)
         x = self.relu(x)
@@ -204,12 +219,18 @@ class ByteNetDecoder(FairseqDecoder):
         x = self.dropout(x)
 
         x = torch.cat(
-            [x, final_encoder_hidden.unsqueeze(1).expand(bsz, tgt_len, -1)],
+            [x, final_encoder_hidden.unsqueeze(1).expand(tgt_len, bsz, -1)],
             dim=2,
         )
 
+        print(x.size())
+
+        x = x.transpose(1, 2)
+
         for layer in self.layers:
             x = layer(x)
+
+        x = x.transpose(1, 2)
 
         x = x.transpose(0, 1)
 
