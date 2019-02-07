@@ -205,6 +205,8 @@ class ByteNetDecoder(FairseqDecoder):
             dim=2,
         )
 
+        x = x.view(bsz, self.hidden_dim, tgt_len)
+
         for layer in self.layers:
             x = layer(x)
 
