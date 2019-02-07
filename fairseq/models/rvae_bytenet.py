@@ -69,7 +69,6 @@ class ResBlock(nn.Module):
         )
 
     def forward(self, input):
-        print(self.block(input).size())
         return input + self.block(input)
 
 
