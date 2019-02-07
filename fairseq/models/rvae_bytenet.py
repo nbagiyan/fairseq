@@ -221,18 +221,15 @@ class ByteNetDecoder(FairseqDecoder):
             [x, final_encoder_hidden.unsqueeze(1).expand(bsz, tgt_len, -1)],
             dim=2,
         )
-        print(x.size())
+
         x = x.transpose(1, 2).transpose(0, 2)
 
         for layer in self.layers:
             x = layer(x)
 
-        print(x.size())
         x = x.transpose(2, 0).transpose(2, 1)
-        print(x.size())
 
         x = x.transpose(0, 1)
-        print(x.size())
 
         x = self.output_projection(x)
 
