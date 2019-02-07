@@ -13,7 +13,7 @@ from torch.nn.modules.utils import _single
 
 class Conv1d(_ConvNd):
     def __init__(self, in_channels, out_channels, kernel_size,
-                 padding='SAME', dilation=1, groups=1, bias=True):
+                 padding='SAME', dilation=1, groups=1, bias=False):
         padding = _single(self.same_padding(kernel_size, dilation)) if padding == 'SAME' else _single(int(padding))
         kernel_size = _single(kernel_size)
         dilation = _single(dilation)
@@ -28,7 +28,7 @@ class Conv1d(_ConvNd):
 
     @staticmethod
     def same_padding(kernel_size, dilation):
-        width = dilation * kernel_size - dilation
+        width = dilation * kernel_size - dilation + 1
         return width // 2
 
 
