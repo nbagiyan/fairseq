@@ -7,69 +7,23 @@ from fairseq.models import FairseqEncoder
 from fairseq.models import FairseqDecoder
 from fairseq.models import FairseqModel, register_model
 from fairseq.models import register_model_architecture
-from torch.nn.modules.conv import _ConvNd
-from torch.nn.modules.utils import _single
 
 
-class Conv1d(_ConvNd):
-    def __init__(self, in_channels, out_channels, kernel_size,
-                 padding='SAME', dilation=1, groups=1, bias=False):
-        padding = _single(self.same_padding(kernel_size, dilation)) if padding == 'SAME' else _single(int(padding))
-        kernel_size = _single(kernel_size)
-        dilation = _single(dilation)
+class MaskedConv1d(nn.Conv1d):
 
-        super(Conv1d, self).__init__(
-            in_channels, out_channels, kernel_size, 1, padding, dilation,
-            False, _single(0), groups, bias)
+    def __init__(self, in_channels, out_channels, kernel_size, dilation=1,
+                 groups=1, bias=True, causal=True):
+        if causal:
+            padding = (kernel_size - 1) * dilation
+        else:
+            padding = (kernel_size - 1) * dilation // 2
+        super(MaskedConv1d, self).__init__(in_channels, out_channels, kernel_size,
+                                           stride=1, padding=padding, dilation=dilation,
+                                           groups=groups, bias=bias)
 
-    def forward(self, input):
-        return F.conv1d(input, self.weight, self.bias, self.stride,
-                        self.padding, self.dilation, self.groups)
-
-    @staticmethod
-    def same_padding(kernel_size, dilation):
-        width = dilation * kernel_size - dilation + 1
-        return width // 2
-
-
-class MaskedConv1d(_ConvNd):
-    def __init__(self, in_channels, out_channels, kernel_size,
-                 padding='SAME', dilation=1, bias=False):
-        implied_kernel_size = kernel_size // 2 + 1
-        padding = _single(self.same_padding(kernel_size, dilation)) if padding == 'SAME' else _single(int(padding))
-        kernel_size = _single(kernel_size)
-        dilation = _single(dilation)
-
-        self.mask = torch.ones(out_channels, in_channels, *kernel_size).byte()
-        self.mask[:, :, :implied_kernel_size] = torch.zeros(out_channels, in_channels, implied_kernel_size)
-
-        super(MaskedConv1d, self).__init__(
-            in_channels, out_channels, kernel_size, 1, padding, dilation,
-            False, _single(0), 1, bias)
-
-    def forward(self, input):
-        return F.conv1d(input, self.masked_weight, self.bias, self.stride,
-                        self.padding, self.dilation, self.groups)
-
-    @property
-    def masked_weight(self):
-        self.weight.data.masked_fill_(self.mask.cuda(), 0)
-        return self.weight
-
-    @staticmethod
-    def same_padding(kernel_size, dilation):
-        width = dilation * kernel_size - dilation + 1
-        return width // 2
-
-    def cuda(self, device=None):
-        super(MaskedConv1d, self).cuda(device)
-        self.mask = self.mask.cuda()
-        return self
-
-    def cpu(self):
-        super(MaskedConv1d, self).cpu()
-        self.mask = self.mask.cpu()
-        return self
+    def forward(self, inputs):
+        output = super(MaskedConv1d, self).forward(inputs)
+        return output[:, :, :inputs.size(2)]
 
 
 class LayerNorm(nn.Module):
@@ -103,7 +57,7 @@ class ResBlock(nn.Module):
         self.block = nn.Sequential(
             LayerNorm(hidden_dim),
             nn.ReLU(),
-            Conv1d(hidden_dim, hidden_dim // 2, kernel_size=1),
+            nn.Conv1d(hidden_dim, hidden_dim // 2, kernel_size=1),
 
             LayerNorm(hidden_dim // 2),
             nn.ReLU(),
@@ -111,7 +65,7 @@ class ResBlock(nn.Module):
 
             LayerNorm(hidden_dim // 2),
             nn.ReLU(),
-            Conv1d(hidden_dim // 2, hidden_dim, kernel_size=1)
+            nn.Conv1d(hidden_dim // 2, hidden_dim, kernel_size=1)
         )
 
     def forward(self, input):
