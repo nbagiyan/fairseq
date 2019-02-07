@@ -155,7 +155,6 @@ class VAELSTMEncoder(FairseqEncoder):
         }
 
 
-@register_model('bytenet_rvae')
 class ByteNetDecoder(FairseqDecoder):
 
     def __init__(
@@ -209,8 +208,9 @@ class ByteNetDecoder(FairseqDecoder):
 
         return x, None, encoder_out['logvar'], encoder_out['mu']
 
-class ByteNetRVAE(FairseqModel):
 
+@register_model('bytenet_rvae')
+class ByteNetRVAE(FairseqModel):
     @staticmethod
     def add_args(parser):
         # Models can override this method to add new command-line arguments.
