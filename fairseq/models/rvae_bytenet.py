@@ -225,6 +225,8 @@ class ByteNetDecoder(FairseqDecoder):
 
         x = x.transpose(0, 1)
 
+        print(x.size())
+
         x = self.output_projection(x)
 
         return x, None, encoder_out['logvar'], encoder_out['mu']
