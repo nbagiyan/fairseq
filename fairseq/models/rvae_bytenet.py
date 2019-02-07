@@ -155,6 +155,7 @@ class VAELSTMEncoder(FairseqEncoder):
         }
 
 
+@register_model('bytenet_rvae')
 class ByteNetDecoder(FairseqDecoder):
 
     def __init__(
