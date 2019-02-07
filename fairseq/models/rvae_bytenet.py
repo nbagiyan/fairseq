@@ -161,6 +161,8 @@ class ByteNetDecoder(FairseqDecoder):
             self, dictionary, encoder_hidden_dim=128, embed_dim=128,
             dropout=0.1,
     ):
+        super().__init__(dictionary)
+
         self.decoder_dilations = [1, 2, 4, 8, 16, 32, 64]
 
         self.dropout = nn.Dropout(p=dropout)
