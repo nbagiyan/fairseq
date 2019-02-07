@@ -197,7 +197,7 @@ class ByteNetDecoder(FairseqDecoder):
             for dilation in self.decoder_dilations
         ])
 
-        self.output_projection = nn.Linear(self.hidden_dim, len(dictionary))
+        self.output_projection = nn.Conv1d(self.hidden_dim, len(dictionary))
 
     def forward(self, prev_output_tokens, encoder_out):
 
@@ -221,7 +221,7 @@ class ByteNetDecoder(FairseqDecoder):
         for layer in self.layers:
             x = layer(x)
 
-        x = x.view(bsz, tgt_len, self.hidden_dim)
+        #x = x.view(bsz, tgt_len, self.hidden_dim)
 
         x = self.output_projection(x)
 
