@@ -40,8 +40,8 @@ class MaskedConv1d(_ConvNd):
         kernel_size = _single(kernel_size)
         dilation = _single(dilation)
 
-        self.mask = t.ones(out_channels, in_channels, *kernel_size).byte()
-        self.mask[:, :, :implied_kernel_size] = t.zeros(out_channels, in_channels, implied_kernel_size)
+        self.mask = torch.ones(out_channels, in_channels, *kernel_size).byte()
+        self.mask[:, :, :implied_kernel_size] = torch.zeros(out_channels, in_channels, implied_kernel_size)
 
         super(MaskedConv1d, self).__init__(
             in_channels, out_channels, kernel_size, 1, padding, dilation,
