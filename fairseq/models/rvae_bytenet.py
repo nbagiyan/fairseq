@@ -50,6 +50,7 @@ class ResBlock(nn.Module):
         x += input
         return x
 
+
 class VAELSTMEncoder(FairseqEncoder):
 
     def __init__(
@@ -204,8 +205,6 @@ class ByteNetDecoder(FairseqDecoder):
             [x, final_encoder_hidden.unsqueeze(1).expand(bsz, tgt_len, -1)],
             dim=2,
         )
-
-        x = x.transpose(1, 2).contiguous()
 
         for layer in self.layers:
             x = layer(x)
