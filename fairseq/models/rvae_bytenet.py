@@ -180,11 +180,11 @@ class ByteNetDecoder(FairseqDecoder):
 
     def __init__(
             self, dictionary, encoder_hidden_dim=128, embed_dim=128,
-            dropout=0.1,
+            dropout=0.1, dilations='1,2,4,8'
     ):
         super().__init__(dictionary)
 
-        self.decoder_dilations = [1, 2, 4, 8, 16, 32, 64]
+        self.decoder_dilations = [int(x) for x in dilations.split(',')]
 
         self.dropout = nn.Dropout(p=dropout)
 
@@ -267,6 +267,11 @@ class ByteNetRVAE(FairseqModel):
             '--decoder-dropout', type=float, default=0.1,
             help='decoder dropout probability',
         )
+        parser.add_argument(
+            '--dilations', type=str, default='1,2,4,8',
+            help='dilations for masked convolutions'
+        )
+
 
     @classmethod
     def build_model(cls, args, task):
@@ -288,6 +293,7 @@ class ByteNetRVAE(FairseqModel):
             encoder_hidden_dim=args.encoder_hidden_dim,
             embed_dim=args.decoder_embed_dim,
             dropout=args.decoder_dropout,
+            dilations=args.dilations,
         )
         model = ByteNetRVAE(encoder, decoder)
 
