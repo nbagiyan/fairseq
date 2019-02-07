@@ -34,7 +34,7 @@ class Conv1d(_ConvNd):
 
 class MaskedConv1d(_ConvNd):
     def __init__(self, in_channels, out_channels, kernel_size,
-                 padding='SAME', dilation=1, bias=True):
+                 padding='SAME', dilation=1, bias=False):
         implied_kernel_size = kernel_size // 2 + 1
         padding = _single(self.same_padding(kernel_size, dilation)) if padding == 'SAME' else _single(int(padding))
         kernel_size = _single(kernel_size)
