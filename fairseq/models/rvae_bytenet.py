@@ -219,13 +219,16 @@ class ByteNetDecoder(FairseqDecoder):
         x = self.dropout(x)
 
         x = torch.cat(
-            [x, final_encoder_hidden.unsqueeze(1).expand(tgt_len, bsz, -1)],
+            [x, final_encoder_hidden.unsqueeze(1).expand(bsz, tgt_len, -1)],
             dim=2,
         )
 
         print(x.size())
 
         x = x.transpose(1, 2)
+
+        print(x.size())
+
 
         for layer in self.layers:
             x = layer(x)
