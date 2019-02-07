@@ -225,7 +225,7 @@ class ByteNetDecoder(FairseqDecoder):
 
         x = x.transpose(0, 1)
 
-        print(x.size())
+        print(x.size(), bsz)
 
         x = self.output_projection(x)
 
