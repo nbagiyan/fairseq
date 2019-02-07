@@ -53,7 +53,7 @@ class MaskedConv1d(_ConvNd):
 
     @property
     def masked_weight(self):
-        self.weight.data.masked_fill_(self.mask, 0)
+        self.weight.data.masked_fill_(self.mask.cuda(), 0)
         return self.weight
 
     @staticmethod
