@@ -227,12 +227,16 @@ class ByteNetDecoder(FairseqDecoder):
             dim=2,
         )
 
-        x = x.view(bsz, self.hidden_dim, tgt_len)
+        x = x.transpose(1, 2).transpose(0, 2)
 
         for layer in self.layers:
             x = layer(x)
 
-        x = x.view(bsz, tgt_len, self.hidden_dim)
+        x = x.transpose(2, 0).transpose(2, 1)
+
+        x = x.transpose(0, 1)
+
+        print(x.size(), bsz)
 
         x = self.output_projection(x)
 
