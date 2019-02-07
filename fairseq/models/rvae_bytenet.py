@@ -37,14 +37,20 @@ class ResBlock(nn.Module):
         self.hidden_dim = hidden_dim
         self.dilation = dilation
         self.kernel_size = kernel_size
-        self.layer_norm1 = LayerNorm(hidden_dim)
-        self.conv1 = nn.Conv1d(hidden_dim,  hidden_dim // 2, kernel_size=1)
-        self.layer_norm2 = LayerNorm(hidden_dim // 2)
-        self.relu = nn.ReLU(True)
-        self.pad = nn.ConstantPad1d((ResBlock.same_pad(kernel_size, dilation), 0), 0.)
-        self.masked_conv = nn.Conv1d(hidden_dim // 2, hidden_dim // 2, kernel_size=kernel_size, dilation=dilation)
-        self.layer_norm3 = LayerNorm(hidden_dim // 2)
-        self.conv2 = nn.Conv1d(hidden_dim // 2, hidden_dim, kernel_size=1)
+        self.block = nn.Sequential(
+            LayerNorm(hidden_dim),
+            nn.ReLU(),
+            nn.Conv1d(hidden_dim, hidden_dim // 2, kernel_size=1),
+
+            LayerNorm(hidden_dim // 2),
+            nn.ReLU(),
+            nn.ConstantPad1d((ResBlock.same_pad(kernel_size, dilation), 0), 0.),
+            nn.Conv1d(hidden_dim // 2, hidden_dim // 2, kernel_size=kernel_size, dilation=dilation),
+
+            LayerNorm(hidden_dim // 2),
+            nn.ReLU(),
+            nn.Conv1d(hidden_dim // 2, hidden_dim, kernel_size=1)
+        )
 
     @staticmethod
     def same_pad(k=1, dil=1):
@@ -52,19 +58,7 @@ class ResBlock(nn.Module):
         return p
 
     def forward(self, input):
-        x = input
-        x = self.layer_norm1(x)
-        x = self.relu(x)
-        x = self.conv1(x)
-        x = self.layer_norm2(x)
-        x = self.relu(x)
-        x = self.pad(x)
-        x = self.masked_conv(x)
-        x = self.layer_norm3(x)
-        x = self.relu(x)
-        x = self.conv2(x)
-        x += input
-        return x
+        return input + self.block(input)
 
 
 class VAELSTMEncoder(FairseqEncoder):
