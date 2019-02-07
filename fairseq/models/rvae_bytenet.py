@@ -39,6 +39,7 @@ class ResBlock(nn.Module):
         x = input
         x = self.layer_norm1(x)
         x = self.relu(x)
+        x = x.transpose(2, 1).transpose(0, 2)
         x = self.conv1(x)
         x = self.layer_norm2(x)
         x = self.relu(x)
@@ -48,6 +49,7 @@ class ResBlock(nn.Module):
         x = self.relu(x)
         x = self.conv2(x)
         x += input
+        x = x.transpose(2, 0).transpose(1, 2)
         return x
 
 
@@ -205,8 +207,6 @@ class ByteNetDecoder(FairseqDecoder):
             [x, final_encoder_hidden.unsqueeze(1).expand(bsz, tgt_len, -1)],
             dim=2,
         )
-
-        x = x.transpose(2, 1).transpose(0, 2)
 
         for layer in self.layers:
             x = layer(x)
