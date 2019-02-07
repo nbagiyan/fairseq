@@ -115,6 +115,7 @@ class ResBlock(nn.Module):
         )
 
     def forward(self, input):
+        print(self.block(input))
         return input + self.block(input)
 
 
