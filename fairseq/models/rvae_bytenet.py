@@ -9,6 +9,10 @@ from fairseq.models import FairseqModel, register_model
 from fairseq.models import register_model_architecture
 
 
+def LayerNorm(dim):
+    m = nn.LayerNorm(dim)
+    return m
+
 
 class ResBlock(nn.Module):
 
@@ -17,13 +21,13 @@ class ResBlock(nn.Module):
         self.hidden_dim = hidden_dim # input features
         self.dilation = dilation # dilation size
         self.kernel_size = kernel_size # "masked kernel size"
-        self.layer_norm1 = nn.InstanceNorm1d(num_features=hidden_dim, affine=True) # same as LayerNorm
+        self.layer_norm1 = LayerNorm(hidden_dim) # same as LayerNorm
         self.conv1 = nn.Conv1d(hidden_dim,  hidden_dim // 2, kernel_size=1) # output is "d"
-        self.layer_norm2 = nn.InstanceNorm1d(num_features=hidden_dim // 2, affine=True)
+        self.layer_norm2 = LayerNorm(hidden_dim // 2)
         self.relu = nn.ReLU(True)
         self.pad = nn.ConstantPad1d((ResBlock.same_pad(kernel_size, dilation), 0), 0.)
         self.masked_conv = nn.Conv1d(hidden_dim, hidden_dim, kernel_size=kernel_size, dilation=dilation)
-        self.layer_norm3 = nn.InstanceNorm1d(num_features=hidden_dim, affine=True)
+        self.layer_norm3 = LayerNorm(hidden_dim)
         self.conv2 = nn.Conv1d(hidden_dim, 2*hidden_dim, kernel_size=1) # output is "2*d"
 
     @staticmethod
