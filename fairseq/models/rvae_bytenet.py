@@ -28,7 +28,7 @@ class Conv1d(_ConvNd):
 
     @staticmethod
     def same_padding(kernel_size, dilation):
-        width = dilation * kernel_size - dilation + 1
+        width = dilation * kernel_size - dilation
         return width // 2
 
 
