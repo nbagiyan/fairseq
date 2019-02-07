@@ -9,23 +9,6 @@ from fairseq.models import FairseqModel, register_model
 from fairseq.models import register_model_architecture
 
 
-class MaskedConv1d(nn.Conv1d):
-
-    def __init__(self, in_channels, out_channels, kernel_size, dilation=1,
-                 groups=1, bias=True, causal=True):
-        if causal:
-            padding = (kernel_size - 1) * dilation
-        else:
-            padding = (kernel_size - 1) * dilation // 2
-        super(MaskedConv1d, self).__init__(in_channels, out_channels, kernel_size,
-                                           stride=1, padding=padding, dilation=dilation,
-                                           groups=groups, bias=bias)
-
-    def forward(self, inputs):
-        output = super(MaskedConv1d, self).forward(inputs)
-        return output[:, :, :inputs.size(2)]
-
-
 class LayerNorm(nn.Module):
     def __init__(self, size, eps=1e-8):
         super(LayerNorm, self).__init__()
@@ -61,12 +44,18 @@ class ResBlock(nn.Module):
 
             LayerNorm(hidden_dim // 2),
             nn.ReLU(),
-            MaskedConv1d(hidden_dim // 2, hidden_dim // 2, kernel_size=kernel_size, dilation=dilation),
+            nn.ConstantPad1d((ResBlock.same_pad(kernel_size, dilation), 0), 0.),
+            nn.Conv1d(hidden_dim // 2, hidden_dim // 2, kernel_size=kernel_size, dilation=dilation),
 
             LayerNorm(hidden_dim // 2),
             nn.ReLU(),
             nn.Conv1d(hidden_dim // 2, hidden_dim, kernel_size=1)
         )
+
+    @staticmethod
+    def same_pad(k=1, dil=1):
+        p = math.ceil(dil * (k - 1))
+        return p
 
     def forward(self, input):
         return input + self.block(input)
@@ -227,16 +216,12 @@ class ByteNetDecoder(FairseqDecoder):
             dim=2,
         )
 
-        x = x.transpose(1, 2).transpose(0, 2)
+        x = x.view(bsz, self.hidden_dim, tgt_len)
 
         for layer in self.layers:
             x = layer(x)
 
-        x = x.transpose(2, 0).transpose(2, 1)
-
-        x = x.transpose(0, 1)
-
-        print(x.size(), bsz)
+        x = x.view(bsz, tgt_len, self.hidden_dim)
 
         x = self.output_projection(x)
 
