@@ -1,12 +1,12 @@
 import math
-import torch.nn as nn
-import torch.nn.functional as F
 import torch
+import torch.nn as nn
 from fairseq import utils
 from fairseq.models import FairseqEncoder
 from fairseq.models import FairseqDecoder
 from fairseq.models import FairseqModel, register_model
 from fairseq.models import register_model_architecture
+from fairseq.modules import SinusoidalPositionalEmbedding
 
 
 class LayerNorm(nn.Module):
@@ -61,20 +61,38 @@ class ResBlock(nn.Module):
         return input + self.block(input)
 
 
+def PositionalEmbedding(num_embeddings, embedding_dim, padding_idx, left_pad):
+    m = SinusoidalPositionalEmbedding(embedding_dim, padding_idx, left_pad, num_embeddings + padding_idx + 1)
+    return m
+
+
+def Embedding(num_embeddings, embedding_dim, padding_idx):
+    m = nn.Embedding(num_embeddings, embedding_dim, padding_idx=padding_idx)
+    nn.init.normal_(m.weight, mean=0, std=embedding_dim ** -0.5)
+    nn.init.constant_(m.weight[padding_idx], 0)
+    return m
+
+
 class VAELSTMEncoder(FairseqEncoder):
 
     def __init__(
-        self, args, dictionary, embed_dim=128, hidden_dim=128, dropout=0.1,
+        self, args, dictionary, embed_tokens, embed_dim=128, hidden_dim=128, dropout=0.1,
     ):
         super().__init__(dictionary)
         self.args = args
 
         # Our encoder will embed the inputs before feeding them to the LSTM.
-        self.embed_tokens = nn.Embedding(
-            num_embeddings=len(dictionary),
-            embedding_dim=embed_dim,
-            padding_idx=dictionary.pad(),
+        self.embed_scale = math.sqrt(embed_dim)
+
+        self.embed_positions = PositionalEmbedding(
+            args.max_source_positions,
+            embed_dim,
+            dictionary.pad(),
+            left_pad=True,
         )
+
+        self.embed_tokens = embed_tokens
+
         self.dropout = nn.Dropout(p=dropout)
 
         self.hidden_dim = hidden_dim
@@ -111,8 +129,8 @@ class VAELSTMEncoder(FairseqEncoder):
 
         bsz, seqlen = src_tokens.size()
 
-        # Embed the source.
-        x = self.embed_tokens(src_tokens)
+        x = self.embed_scale * self.embed_tokens(src_tokens)
+        x += self.embed_positions(src_tokens)
 
         # Apply dropout.
         x = self.dropout(x)
@@ -173,7 +191,7 @@ class VAELSTMEncoder(FairseqEncoder):
 class ByteNetDecoder(FairseqDecoder):
 
     def __init__(
-            self, dictionary, encoder_hidden_dim=128, embed_dim=128,
+            self, args, dictionary, embed_tokens, encoder_hidden_dim=128, embed_dim=128,
             dropout=0.1, dilations='1,2,4,8'
     ):
         super().__init__(dictionary)
@@ -182,11 +200,16 @@ class ByteNetDecoder(FairseqDecoder):
 
         self.dropout = nn.Dropout(p=dropout)
 
-        self.embed_tokens = nn.Embedding(
-            num_embeddings=len(dictionary),
-            embedding_dim=embed_dim,
-            padding_idx=dictionary.pad(),
+        self.embed_scale = math.sqrt(embed_dim)
+
+        self.embed_positions = PositionalEmbedding(
+            args.max_source_positions,
+            embed_dim,
+            dictionary.pad(),
+            left_pad=False,
         )
+
+        self.embed_tokens = embed_tokens
 
         self.hidden_dim = encoder_hidden_dim + embed_dim
 
@@ -206,7 +229,9 @@ class ByteNetDecoder(FairseqDecoder):
         bsz, tgt_len = prev_output_tokens.size()
 
         # Embed the source.
-        x = self.embed_tokens(prev_output_tokens)
+        positions = self.embed_positions(prev_output_tokens)
+        x = self.embed_scale * self.embed_tokens(prev_output_tokens)
+        x += positions
 
         # Apply dropout.
         x = self.dropout(x)
@@ -273,15 +298,37 @@ class ByteNetRVAE(FairseqModel):
         # In this case we'll just return a SimpleLSTMModel instance.
 
         # Initialize our Encoder and Decoder.
+
+        src_dict, tgt_dict = task.source_dictionary, task.target_dictionary
+
+
+        def build_embedding(dictionary, embed_dim, path=None):
+            num_embeddings = len(dictionary)
+            padding_idx = dictionary.pad()
+            emb = Embedding(num_embeddings, embed_dim, padding_idx)
+            # if provided, load from preloaded dictionaries
+            if path:
+                embed_dict = utils.parse_embedding(path)
+                utils.load_embedding(embed_dict, dictionary, emb)
+            return emb
+
+        encoder_embed_tokens = build_embedding(
+            src_dict, args.encoder_embed_dim, args.encoder_embed_path
+        )
+        decoder_embed_tokens = encoder_embed_tokens
+
         encoder = VAELSTMEncoder(
             args=args,
             dictionary=task.source_dictionary,
+            embed_tokens=encoder_embed_tokens,
             embed_dim=args.encoder_embed_dim,
             hidden_dim=args.encoder_hidden_dim,
             dropout=args.encoder_dropout,
         )
         decoder = ByteNetDecoder(
+            args=args,
             dictionary=task.target_dictionary,
+            embed_tokens=decoder_embed_tokens,
             encoder_hidden_dim=args.encoder_hidden_dim,
             embed_dim=args.decoder_embed_dim,
             dropout=args.decoder_dropout,
