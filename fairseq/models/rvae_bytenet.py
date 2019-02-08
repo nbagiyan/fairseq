@@ -301,7 +301,6 @@ class ByteNetRVAE(FairseqModel):
 
         src_dict, tgt_dict = task.source_dictionary, task.target_dictionary
 
-
         def build_embedding(dictionary, embed_dim, path=None):
             num_embeddings = len(dictionary)
             padding_idx = dictionary.pad()
@@ -313,7 +312,7 @@ class ByteNetRVAE(FairseqModel):
             return emb
 
         encoder_embed_tokens = build_embedding(
-            src_dict, args.encoder_embed_dim, args.encoder_embed_path
+            src_dict, args.encoder_embed_dim
         )
         decoder_embed_tokens = encoder_embed_tokens
 
