@@ -119,13 +119,6 @@ class VAELSTMEncoder(FairseqEncoder):
         # configured by adding the `--left-pad-source "False"` command-line
         # argument, but here we'll make the Encoder handle either kind of
         # padding by converting everything to be right-padded.
-        # if self.args.left_pad_source:
-        #     # Convert left-padding to right-padding.
-        #     src_tokens = utils.convert_padding_direction(
-        #         src_tokens,
-        #         padding_idx=self.dictionary.pad(),
-        #         left_to_right=True
-        #     )
 
         bsz, seqlen = src_tokens.size()
 
@@ -317,7 +310,10 @@ class ByteNetRVAE(FairseqModel):
         encoder_embed_tokens = build_embedding(
             src_dict, args.encoder_embed_dim
         )
-        decoder_embed_tokens = encoder_embed_tokens
+
+        decoder_embed_tokens = build_embedding(
+            src_dict, args.encoder_embed_dim
+        )
 
         encoder = VAELSTMEncoder(
             args=args,
