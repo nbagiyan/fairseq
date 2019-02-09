@@ -311,9 +311,7 @@ class ByteNetRVAE(FairseqModel):
             src_dict, args.encoder_embed_dim
         )
 
-        decoder_embed_tokens = build_embedding(
-            src_dict, args.encoder_embed_dim
-        )
+        decoder_embed_tokens = encoder_embed_tokens
 
         encoder = VAELSTMEncoder(
             args=args,
