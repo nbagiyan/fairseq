@@ -41,7 +41,7 @@ def main(args):
     src_dict = task.source_dictionary
     tgt_dict = task.target_dictionary
 
-    target = np.loadtxt(args.target_path, dtype='int64')
+    target = np.loadtxt(args.target_path).astype('int64')
 
     # Load ensemble
     print('| loading model(s) from {}'.format(args.path))
