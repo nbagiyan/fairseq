@@ -11,7 +11,7 @@ class FGSMAttack(object):
         """
         self.model = model
         self.epsilon = epsilon
-        self.loss_fn = nn.CrossEntropyLoss()
+        self.loss_fn = nn.BCEWithLogitsLoss(reduction='elementwise_mean')
 
     def perturb(self, X_nat, y, adversarial_target=None):
         """
