@@ -11,6 +11,8 @@ import torch
 
 from fairseq import search, utils
 from fairseq.models import FairseqIncrementalDecoder
+from fairseq.models.fgsm import FGSMAttack
+
 
 
 class SequenceGenerator(object):
@@ -19,7 +21,8 @@ class SequenceGenerator(object):
         normalize_scores=True, len_penalty=1., unk_penalty=0., retain_dropout=False,
         sampling=False, sampling_topk=-1, sampling_temperature=1.,
         diverse_beam_groups=-1, diverse_beam_strength=0.5,
-        match_source_len=False, no_repeat_ngram_size=0
+        match_source_len=False, no_repeat_ngram_size=0, attack=False, target=None, classifier=None,
+        epsilon=None
     ):
         """Generates translations of a given source sentence.
         Args:
@@ -66,6 +69,13 @@ class SequenceGenerator(object):
         self.retain_dropout = retain_dropout
         self.match_source_len = match_source_len
         self.no_repeat_ngram_size = no_repeat_ngram_size
+        if attack:
+            assert target is not None or classifier is not None or epsilon is not None, \
+                'target and model required to be not None for attack'
+            self.attack = attack
+            self.target = target
+            self.classifier = classifier
+            self.epsilon = epsilon
 
         assert sampling_topk < 0 or sampling, '--sampling-topk requires --sampling'
 
@@ -104,6 +114,8 @@ class SequenceGenerator(object):
             if 'net_input' not in s:
                 continue
             input = s['net_input']
+            if self.attack:
+                sample_ids = sample['id']
             # model.forward normally channels prev_output_tokens into the decoder
             # separately, but SequenceGenerator directly calls model.encoder
             encoder_input = {
@@ -113,13 +125,14 @@ class SequenceGenerator(object):
             srclen = encoder_input['src_tokens'].size(1)
             if timer is not None:
                 timer.start()
-            with torch.no_grad():
-                hypos = self.generate(
-                    encoder_input,
-                    beam_size=beam_size,
-                    maxlen=int(maxlen_a*srclen + maxlen_b),
-                    prefix_tokens=s['target'][:, :prefix_size] if prefix_size > 0 else None,
-                )
+
+            hypos = self.generate(
+                encoder_input,
+                beam_size=beam_size,
+                maxlen=int(maxlen_a*srclen + maxlen_b),
+                prefix_tokens=s['target'][:, :prefix_size] if prefix_size > 0 else None,
+                sample_ids=sample_ids
+            )
             if timer is not None:
                 timer.stop(sum(len(h[0]['tokens']) for h in hypos))
             for i, id in enumerate(s['id'].data):
@@ -128,7 +141,7 @@ class SequenceGenerator(object):
                 ref = utils.strip_pad(s['target'].data[i, :], self.pad) if s['target'] is not None else None
                 yield id, src, ref, hypos[i]
 
-    def generate(self, encoder_input, beam_size=None, maxlen=None, prefix_tokens=None):
+    def generate(self, encoder_input, beam_size=None, maxlen=None, prefix_tokens=None, sample_ids=None):
         """Generate a batch of translations.
 
         Args:
@@ -139,10 +152,9 @@ class SequenceGenerator(object):
             max_len: maximum length of the generated sequence
             prefix_tokens: force decoder to begin with these tokens
         """
-        with torch.no_grad():
-            return self._generate(encoder_input, beam_size, maxlen, prefix_tokens)
+        return self._generate(encoder_input, beam_size, maxlen, prefix_tokens, sample_ids=None)
 
-    def _generate(self, encoder_input, beam_size=None, maxlen=None, prefix_tokens=None):
+    def _generate(self, encoder_input, beam_size=None, maxlen=None, prefix_tokens=None, sample_ids=None):
         """See generate"""
         src_tokens = encoder_input['src_tokens']
         src_lengths = (src_tokens.ne(self.eos) & src_tokens.ne(self.pad)).long().sum(dim=1)
@@ -167,6 +179,15 @@ class SequenceGenerator(object):
 
             # compute the encoder output for each beam
             encoder_out = model.encoder(**encoder_input)
+            if self.attack:
+                y_test = self.target[sample_ids.numpy()]
+                adversarial_target = (y_test == 0).astype('int64')
+                fgsm = FGSMAttack(self.classifier, self.epsilon)
+                adversarial_encoder_out = fgsm.perturb(encoder_out['encoder_out'].detach().numpy(),
+                                                       y_test,
+                                                       adversarial_target)
+                encoder_out['encoder_out'] = torch.tensor(adversarial_encoder_out)
+
             new_order = torch.arange(bsz).view(-1, 1).repeat(1, beam_size).view(-1)
             new_order = new_order.to(src_tokens.device).long()
             encoder_out = model.encoder.reorder_encoder_out(encoder_out, new_order)

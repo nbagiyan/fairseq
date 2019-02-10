@@ -26,10 +26,12 @@ def get_training_parser(default_task='translation'):
     return parser
 
 
-def get_generation_parser(interactive=False, default_task='translation'):
+def get_generation_parser(interactive=False, default_task='translation', style_transfer=False):
     parser = get_parser('Generation', default_task)
     add_dataset_args(parser, gen=True)
     add_generation_args(parser)
+    if style_transfer:
+        add_style_transfer_args(parser)
     if interactive:
         add_interactive_args(parser)
     return parser
@@ -351,6 +353,20 @@ def add_generation_args(parser):
                        help='strength of diversity penalty for Diverse Beam Search')
     group.add_argument('--print-alignment', action='store_true',
                        help='if set, uses attention feedback to compute and print alignment to source tokens')
+    # fmt: on
+    return group
+
+
+def add_style_transfer_args(parser):
+    group = parser.add_argument_group('Style transfer')
+    group.add_argument('--model-weights', required=True, type=str,
+                       help='Weights for the classifier')
+    group.add_argument('--target-path', required=True, type=str,
+                       help='Target test')
+    group.add_argument('--fgsm-epsilon', required=True, type=float,
+                       help='FGSM epsilon')
+    group.add_argument('--hidden-dim', required=True, type=float,
+                       help='FGSM epsilon')
     # fmt: on
     return group
 
