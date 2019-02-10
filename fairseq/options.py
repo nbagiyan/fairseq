@@ -365,7 +365,7 @@ def add_style_transfer_args(parser):
                        help='Target test')
     group.add_argument('--fgsm-epsilon', required=True, type=float,
                        help='FGSM epsilon')
-    group.add_argument('--hidden-dim', required=True, type=float,
+    group.add_argument('--hidden-dim', required=True, type=int,
                        help='FGSM epsilon')
     # fmt: on
     return group
