@@ -44,29 +44,3 @@ class FGSMAttack(object):
             X -= self.epsilon * grad_sign
 
         return X
-
-
-class Classificator(nn.Module):
-
-    def __init__(self, hidden_dim):
-        super().__init__()
-
-        self.block = nn.Sequential(
-            nn.Linear(hidden_dim, 512),
-            nn.ReLU(),
-            nn.BatchNorm1d(512),
-            nn.Linear(512, 256),
-            nn.ReLU(),
-            nn.BatchNorm1d(256),
-            nn.Linear(256, 128),
-            nn.ReLU(),
-            nn.BatchNorm1d(128),
-            nn.Linear(128, 128),
-            nn.ReLU(),
-            nn.Linear(128, 128),
-            nn.Dropout(0.1),
-            nn.Linear(128, 1)
-        )
-
-    def forward(self, input):
-        return self.block(input)
