@@ -11,7 +11,7 @@ class FGSMAttack(object):
         """
         self.model = model
         self.epsilon = epsilon
-        self.loss_fn = nn.BCEWithLogitsLoss(reduction='elementwise_mean')
+        self.loss_fn = nn.BCEWithLogitsLoss(reduction='mean')
 
     def perturb(self, X_nat, y, adversarial_target=None):
         """
@@ -29,7 +29,7 @@ class FGSMAttack(object):
 
         scores = self.model(X_var)
 
-        loss = self.loss_fn(scores, y_var)
+        loss = self.loss_fn(scores, y_var.unsqueeze(1))
 
         loss.backward()
 
