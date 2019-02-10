@@ -35,8 +35,6 @@ class FGSMAttack(object):
 
         grad_sign = X_var.grad.data.cpu().sign().numpy()
 
-        print(grad_sign)
-
         if adversarial_target is None:
 
             X += self.epsilon * grad_sign
