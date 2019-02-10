@@ -4,6 +4,7 @@ import numpy as np
 
 
 class FGSMAttack(object):
+
     def __init__(self, model, epsilon):
         """
         One step fast gradient sign method
@@ -48,6 +49,8 @@ class FGSMAttack(object):
 class Classificator(nn.Module):
 
     def __init__(self, hidden_dim):
+        super().__init__()
+
         self.block = nn.Sequential(
             nn.Linear(hidden_dim, 512),
             nn.ReLU(),
