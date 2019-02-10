@@ -104,7 +104,7 @@ def main(args):
             sampling=args.sampling, sampling_topk=args.sampling_topk, sampling_temperature=args.sampling_temperature,
             diverse_beam_groups=args.diverse_beam_groups, diverse_beam_strength=args.diverse_beam_strength,
             match_source_len=args.match_source_len, no_repeat_ngram_size=args.no_repeat_ngram_size,
-            target=args.target_path, classifier=classifier, epsilon=args.fgsm_epsilon,
+            attack=True, target=args.target_path, classifier=classifier, epsilon=args.fgsm_epsilon,
         )
 
     if use_cuda:
