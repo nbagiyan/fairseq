@@ -10,12 +10,12 @@ Translate pre-processed data with a trained model.
 """
 
 import torch
+import torch.nn as nn
 
 from fairseq import bleu, data, options, progress_bar, tasks, tokenizer, utils
 from fairseq.meters import StopwatchMeter, TimeMeter
 from fairseq.sequence_generator import SequenceGenerator
 from fairseq.sequence_scorer import SequenceScorer
-from fairseq.models.fgsm import Classificator
 
 
 def main(args):
@@ -72,8 +72,25 @@ def main(args):
         shard_id=args.shard_id,
     ).next_epoch_itr(shuffle=False)
 
-    classifier = Classificator(args.hidden_dim)
+    classifier = nn.Sequential(
+            nn.Linear(args.hidden_dim, 512),
+            nn.ReLU(),
+            nn.BatchNorm1d(512),
+            nn.Linear(512, 256),
+            nn.ReLU(),
+            nn.BatchNorm1d(256),
+            nn.Linear(256, 128),
+            nn.ReLU(),
+            nn.BatchNorm1d(128),
+            nn.Linear(128, 128),
+            nn.ReLU(),
+            nn.Linear(128, 128),
+            nn.Dropout(0.1),
+            nn.Linear(128, 1)
+        )
+
     classifier.load_state_dict(torch.load(args.model_weights))
+    classifier.eval()
 
     # Initialize generator
     gen_timer = StopwatchMeter()
