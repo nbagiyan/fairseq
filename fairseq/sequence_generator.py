@@ -22,7 +22,7 @@ class SequenceGenerator(object):
         normalize_scores=True, len_penalty=1., unk_penalty=0., retain_dropout=False,
         sampling=False, sampling_topk=-1, sampling_temperature=1.,
         diverse_beam_groups=-1, diverse_beam_strength=0.5,
-        match_source_len=False, no_repeat_ngram_size=0, attack=False, target_path=None, classifier=None,
+        match_source_len=False, no_repeat_ngram_size=0, attack=False, target=None, classifier=None,
         epsilon=None
     ):
         """Generates translations of a given source sentence.
@@ -71,10 +71,10 @@ class SequenceGenerator(object):
         self.match_source_len = match_source_len
         self.no_repeat_ngram_size = no_repeat_ngram_size
         if attack:
-            assert target_path is not None or classifier is not None or epsilon is not None, \
+            assert target is not None or classifier is not None or epsilon is not None, \
                 'target and model required to be not None for attack'
             self.attack = attack
-            self.target = np.loadtxt(target_path, dtype='int64')
+            self.target = target
             self.classifier = classifier
             self.epsilon = epsilon
 

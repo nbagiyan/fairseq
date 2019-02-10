@@ -10,6 +10,7 @@ Translate pre-processed data with a trained model.
 """
 
 import torch
+import numpy as np
 import torch.nn as nn
 
 from fairseq import bleu, data, options, progress_bar, tasks, tokenizer, utils
@@ -39,6 +40,8 @@ def main(args):
     # Set dictionaries
     src_dict = task.source_dictionary
     tgt_dict = task.target_dictionary
+
+    target = np.loadtxt(args.target_path, dtype='int64')
 
     # Load ensemble
     print('| loading model(s) from {}'.format(args.path))
@@ -104,7 +107,7 @@ def main(args):
             sampling=args.sampling, sampling_topk=args.sampling_topk, sampling_temperature=args.sampling_temperature,
             diverse_beam_groups=args.diverse_beam_groups, diverse_beam_strength=args.diverse_beam_strength,
             match_source_len=args.match_source_len, no_repeat_ngram_size=args.no_repeat_ngram_size,
-            attack=True, targe_path=args.target_path, classifier=classifier, epsilon=args.fgsm_epsilon,
+            attack=True, target=target, classifier=classifier, epsilon=args.fgsm_epsilon,
         )
 
     if use_cuda:
