@@ -29,7 +29,7 @@ class FGSMAttack(object):
 
         scores = self.model(X_var)
 
-        loss = self.loss_fn(scores, y_var.unsqueeze(1))
+        loss = self.loss_fn(scores, y_var.unsqueeze(1).float())
 
         loss.backward()
 
