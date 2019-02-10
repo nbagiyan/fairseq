@@ -152,7 +152,7 @@ class SequenceGenerator(object):
             max_len: maximum length of the generated sequence
             prefix_tokens: force decoder to begin with these tokens
         """
-        return self._generate(encoder_input, beam_size, maxlen, prefix_tokens, sample_ids=None)
+        return self._generate(encoder_input, beam_size, maxlen, prefix_tokens, sample_ids=sample_ids)
 
     def _generate(self, encoder_input, beam_size=None, maxlen=None, prefix_tokens=None, sample_ids=None):
         """See generate"""
