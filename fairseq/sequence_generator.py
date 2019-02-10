@@ -184,10 +184,10 @@ class SequenceGenerator(object):
                 y_test = self.target[sample_ids.numpy()]
                 adversarial_target = (y_test == 0).astype('int64')
                 fgsm = FGSMAttack(self.classifier, self.epsilon)
-                adversarial_encoder_out = fgsm.perturb(encoder_out['encoder_out'].detach().numpy(),
+                adversarial_encoder_out = fgsm.perturb(encoder_out['final_hidden'].detach().numpy(),
                                                        y_test,
                                                        adversarial_target)
-                encoder_out['encoder_out'] = torch.tensor(adversarial_encoder_out)
+                encoder_out['final_hidden'] = torch.tensor(adversarial_encoder_out)
 
             new_order = torch.arange(bsz).view(-1, 1).repeat(1, beam_size).view(-1)
             new_order = new_order.to(src_tokens.device).long()
