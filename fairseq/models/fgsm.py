@@ -26,6 +26,10 @@ class FGSMAttack(object):
 
         X = np.copy(X_nat)
 
+        alpha = self.epsilon / self.num_iter
+
+        momentum = 0
+
         for _ in range(self.num_iter):
 
             X_var = torch.tensor(X, requires_grad=True)
@@ -36,14 +40,18 @@ class FGSMAttack(object):
 
             loss.backward()
 
-            grad_sign = X_var.grad.data.cpu().sign().numpy()
+            grad = X_var.grad.data.cpu().numpy()
+
+            grad_norm = np.linalg.norm(grad, ord=1)
+
+            momentum = 0.1 * momentum + grad/grad_norm
 
             if adversarial_target is None:
 
-                X += self.epsilon * grad_sign
+                X += alpha * np.sign(momentum)
 
             else:
 
-                X -= self.epsilon * grad_sign
+                X -= alpha * np.sign(momentum)
 
         return X
