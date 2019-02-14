@@ -23,7 +23,7 @@ class SequenceGenerator(object):
         sampling=False, sampling_topk=-1, sampling_temperature=1.,
         diverse_beam_groups=-1, diverse_beam_strength=0.5,
         match_source_len=False, no_repeat_ngram_size=0, attack=False, target=None, classifier=None,
-        epsilon=None
+        epsilon=None, num_iter=None
     ):
         """Generates translations of a given source sentence.
         Args:
@@ -71,12 +71,13 @@ class SequenceGenerator(object):
         self.match_source_len = match_source_len
         self.no_repeat_ngram_size = no_repeat_ngram_size
         if attack:
-            assert target is not None or classifier is not None or epsilon is not None, \
+            assert target is not None or classifier is not None or epsilon is not None or num_iter is not None, \
                 'target and model required to be not None for attack'
             self.attack = attack
             self.target = target
             self.classifier = classifier
             self.epsilon = epsilon
+            self.num_iter = num_iter
 
         assert sampling_topk < 0 or sampling, '--sampling-topk requires --sampling'
 
@@ -183,10 +184,9 @@ class SequenceGenerator(object):
             if self.attack:
                 y_test = self.target[sample_ids.numpy()]
                 adversarial_target = (y_test == 0).astype('int64')
-                fgsm = FGSMAttack(self.classifier, self.epsilon)
+                fgsm = FGSMAttack(self.classifier, self.epsilon, self.num_iter)
                 adversarial_encoder_out = fgsm.perturb(encoder_out['final_hidden'].detach().cpu().numpy(),
-                                                       y_test,
-                                                       adversarial_target)
+                                                       y_test, adversarial_target)
                 if torch.cuda.is_available():
                     adversarial_encoder_out = torch.tensor(adversarial_encoder_out).cuda()
                 else:

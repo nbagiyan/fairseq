@@ -26,7 +26,7 @@ class FGSMAttack(object):
 
         X = np.copy(X_nat)
 
-        for i in range(self.num_iter):
+        for _ in range(self.num_iter):
 
             X_var = torch.tensor(X, requires_grad=True)
 

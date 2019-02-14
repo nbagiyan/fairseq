@@ -367,6 +367,8 @@ def add_style_transfer_args(parser):
                        help='FGSM epsilon')
     group.add_argument('--hidden-dim', required=True, type=int,
                        help='FGSM epsilon')
+    group.add_argument('--fgsm-iter', required=False, default=5, type=int,
+                       help='FGSM iterations')
     # fmt: on
     return group
 
