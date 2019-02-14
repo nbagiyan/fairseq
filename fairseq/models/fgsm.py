@@ -5,13 +5,14 @@ import numpy as np
 
 class FGSMAttack(object):
 
-    def __init__(self, model, epsilon):
+    def __init__(self, model, epsilon, num_iter=5):
         """
         One step fast gradient sign method
         """
         self.model = model
         self.epsilon = epsilon
         self.loss_fn = nn.BCEWithLogitsLoss(reduction='mean')
+        self.num_iter = num_iter
 
     def perturb(self, X_nat, y, adversarial_target=None):
         """
@@ -25,22 +26,24 @@ class FGSMAttack(object):
 
         X = np.copy(X_nat)
 
-        X_var = torch.tensor(X, requires_grad=True)
+        for i in range(self.num_iter):
 
-        scores = self.model(X_var)
+            X_var = torch.tensor(X, requires_grad=True)
 
-        loss = self.loss_fn(scores, y_var.unsqueeze(1).float())
+            scores = self.model(X_var)
 
-        loss.backward()
+            loss = self.loss_fn(scores, y_var.unsqueeze(1).float())
 
-        grad_sign = X_var.grad.data.cpu().sign().numpy()
+            loss.backward()
 
-        if adversarial_target is None:
+            grad_sign = X_var.grad.data.cpu().sign().numpy()
 
-            X += self.epsilon * grad_sign
+            if adversarial_target is None:
 
-        else:
+                X += self.epsilon * grad_sign
 
-            X -= self.epsilon * grad_sign
+            else:
+
+                X -= self.epsilon * grad_sign
 
         return X
