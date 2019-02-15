@@ -45,7 +45,7 @@ class FGSMAttack(object):
 
             grad_norm = np.linalg.norm(grad, ord=1)
 
-            momentum = self.momentum * momentum + grad/grad_norm
+            momentum = self.momentum * momentum + (1 - self.momentum) * grad/grad_norm
 
             if adversarial_target is None:
 
