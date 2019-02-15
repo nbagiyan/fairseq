@@ -5,7 +5,7 @@ import numpy as np
 
 class FGSMAttack(object):
 
-    def __init__(self, model, epsilon, num_iter=5):
+    def __init__(self, model, epsilon, num_iter=5, momentum=0.1):
         """
         One step fast gradient sign method
         """
@@ -13,6 +13,7 @@ class FGSMAttack(object):
         self.epsilon = epsilon
         self.loss_fn = nn.BCEWithLogitsLoss(reduction='mean')
         self.num_iter = num_iter
+        self.momentum = momentum
 
     def perturb(self, X_nat, y, adversarial_target=None):
         """
@@ -44,7 +45,7 @@ class FGSMAttack(object):
 
             grad_norm = np.linalg.norm(grad, ord=1)
 
-            momentum = 0.1 * momentum + grad/grad_norm
+            momentum = self.momentum * momentum + grad/grad_norm
 
             if adversarial_target is None:
 
