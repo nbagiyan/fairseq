@@ -76,21 +76,13 @@ def main(args):
     ).next_epoch_itr(shuffle=False)
 
     classifier = nn.Sequential(
-            nn.Linear(args.hidden_dim, 512),
-            nn.ReLU(),
-            nn.BatchNorm1d(512),
-            nn.Linear(512, 256),
-            nn.ReLU(),
-            nn.BatchNorm1d(256),
-            nn.Linear(256, 128),
-            nn.ReLU(),
-            nn.BatchNorm1d(128),
-            nn.Linear(128, 128),
-            nn.ReLU(),
-            nn.Linear(128, 128),
-            nn.Dropout(0.1),
-            nn.Linear(128, 1)
-        )
+        nn.Linear(1024, 512),
+        nn.ReLU(),
+        nn.Linear(512, 256),
+        nn.ReLU(),
+        nn.Dropout(0.4),
+        nn.Linear(256, 1)
+    )
 
     classifier.load_state_dict(torch.load(args.model_weights))
     classifier.eval()
